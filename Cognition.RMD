@@ -1,0 +1,23 @@
+---
+title: "Analysis of Cognition Measure"
+author: "Olusoji Oluwafemi Daniel"
+date: "18 July 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(markdown)
+library(rmarkdown)
+library(readr)
+library(dplyr)
+library(purrr)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 
+
+```{r readingdata}
+cogdata <- read_csv()
+```
