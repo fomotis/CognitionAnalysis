@@ -10,6 +10,7 @@ library(knitr)
 library(markdown)
 library(rmarkdown)
 library(readr)
+library(readxl)
 library(dplyr)
 library(purrr)
 library(ggplot2)
@@ -19,5 +20,30 @@ knitr::opts_chunk$set(echo = TRUE)
 ### 
 
 ```{r readingdata}
-cogdata <- read_csv()
+cogdata <- read_excel('./Data/UCHE KELECHUKWU (TEST).xls',sheet = 2,col_names = F)
 ```
+
+### Filtering out and Cleaning Patient Characteristics
+
+```{r}
+patientDetails <- cogdata %>% slice(1:7)
+#drop the 2nd and 3rd rows
+patientDetails <- patientDetails %>% select(-c(X2,X3)) %>% data.frame()
+#cleaning rownames and turning the dataset around
+#and later make it variable names
+rownames(patientDetails) <- patientDetails[,1]
+patientDetails <- patientDetails %>% t() %>% data.frame()
+#cleaning new rownames
+rownames(patientDetails) <- gsub('X','',rownames(patientDetails))
+patientDetails <- patientDetails[-1,]
+patientDetails <- as.tbl(patientDetails)
+#Cleaning the numeric variables
+patientDetails <- patientDetails %>% mutate(Age=as.numeric(Age),duration.of.stroke=as.numeric(duration.of.stroke))
+#Cleaning other variables
+#removing the th
+patientDetails <- patientDetails %>% mutate(Patient.no=as.numeric(gsub('patient','',Patient.no)))
+#the variable name sex was treated as a level of the factor sex
+patientDetails <- patientDetails %>% mutate(sex = factor(sex,levels=c('F','M')))
+```
+
+
