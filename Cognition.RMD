@@ -40,10 +40,23 @@ patientDetails <- as.tbl(patientDetails)
 #Cleaning the numeric variables
 patientDetails <- patientDetails %>% mutate(Age=as.numeric(Age),duration.of.stroke=as.numeric(duration.of.stroke))
 #Cleaning other variables
-#removing the th
+#getting patients number
 patientDetails <- patientDetails %>% mutate(Patient.no=as.numeric(gsub('patient','',Patient.no)))
 #the variable name sex was treated as a level of the factor sex
 patientDetails <- patientDetails %>% mutate(sex = factor(sex,levels=c('F','M')))
+#cleaning the group variable which has the same problme has sex
+patientDetails <- patientDetails %>% mutate(group = factor(group,levels=c('A','B')))
+#cleaning affected.limb variable which has the same problme has sex
+patientDetails <- patientDetails %>% mutate(affected.limb = factor(affected.limb,levels=c('lt','rt')))
+#cleaning Handedness variable
+patientDetails <- patientDetails %>% mutate(Handedness = tolower(Handedness))
+patientDetails <- patientDetails %>% mutate(Handedness=gsub('right','rt',Handedness))
+patientDetails <- patientDetails %>% mutate(Handedness = factor(Handedness,levels=c('rt')))
 ```
 
+### Filtering and Cleaning Measured Variables
+
+```{r}
+
+```
 
