@@ -13,6 +13,7 @@ library(readr)
 library(readxl)
 library(dplyr)
 library(purrr)
+library(stringr)
 library(ggplot2)
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -57,6 +58,29 @@ patientDetails <- patientDetails %>% mutate(Handedness = factor(Handedness,level
 ### Filtering and Cleaning Measured Variables
 
 ```{r}
+ms <- cogdata %>% slice(c(1,8:n()))
+#renaming spacity appropriately
+ms$X1[which(ms$X1=='spasticity')] <- c('wristspasticity','elbowspasticity','shoulderspasticity')
+#dealing with the first column
+filling <- function(dataset,variable){
+  if(!is.character(variable)) stop("variable must be character")
+  x <- c(which(!is.na(dataset$variable)),length(dataset$variable))
+  a <- numeric(length(dataset$variable))
+  a[x] <- dataset$variable[x]
+  a[x[length(x)]] <- dataset$variable[x[length(x) - 1]]
+  for(i in 2:length(x)){
+  if(i < length(x)){ 
+      j <- i+1
+      a[(x[i]+1):(x[j]-1)] <- dataset$variable[x[i]]
+    }
+  }
+return(a)
+}
+test <- filling(ms,'X1')
+ms$X1 <- a
+##subsetting and cleaning the wrist data
+wrist <- ms %>% filter(str_detect(X1,'wrist'))
+#
 
 ```
 
