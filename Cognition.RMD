@@ -1,6 +1,6 @@
 ---
 title: "Analysis of Cognition Measure"
-author: "Olusoji Oluwafemi Daniel"
+author: "Olusoji Oluwafemi Daniel and Owokotomo Olajumoke Evangelina"
 date: "18 July 2016"
 output: html_document
 ---
@@ -28,6 +28,7 @@ cogdata <- read_excel('./Data/UCHE KELECHUKWU (TEST).xls',sheet = 2,col_names = 
 ### Filtering out and Cleaning Patient Characteristics
 
 ```{r}
+#removing the first 7 rows
 patientDetails <- cogdata %>% slice(1:7)
 #drop the 2nd and 3rd rows
 patientDetails <- patientDetails %>% select(-c(X2,X3)) %>% data.frame()
@@ -55,6 +56,7 @@ patientDetails <- patientDetails %>% mutate(Handedness = tolower(Handedness))
 patientDetails <- patientDetails %>% mutate(Handedness=gsub('right','rt',Handedness))
 patientDetails <- patientDetails %>% mutate(Handedness = factor(Handedness,levels=c('rt')))
 #
+write.table(patientDetails,'./Data/PatientDetails.txt',row.names = F)
 ```
 
 ### Filtering and Cleaning Measured Variables
@@ -83,6 +85,27 @@ ms$X2 <- filling(ms$X2)
 ms$X1[2] <- 'wrist'
 ```
 
+## Filtering Out MSI Strength (Non Longitudnal)
+
+```{r}
+MSI <- cogdata %>% filter(str_detect(X1,'msi strenght')) %>% select(-c(X2,X3)) %>% data.frame()
+MSI[,1] <- c('wrist_msi_strength','elbow_msi_strength','shoulder_msi_strength')
+rownames(MSI) <- MSI[,1]
+MSI <- MSI %>% t() %>% data.frame()
+rownames(MSI) <- gsub('X','',rownames(MSI))
+MSI <- MSI %>% slice(-1)
+MSI <- sapply(MSI,as.numeric) %>% data.frame()
+```
+
+### Joining MSI and Patient Characteristics (MSI Dataset for Analysis)
+
+```{r}
+MSID <- bind_cols(patientDetails,MSI)
+MSIDdata <- MSID %>% gather(key='msistrength',value='measure',-Patient.no,-sex,-group,-affected.limb,-Age,-duration.of.stroke,-Handedness)
+MSIDdata <- MSIDdata %>% mutate(msistrength=gsub('_msi_strength','',msistrength))
+```
+
+
 ## Subsetting and Cleaning Wrist (Repeated Measure)
 
 ```{r}
@@ -110,24 +133,25 @@ wristlong <- wristlong %>% separate(bodyparts,c('bodypart','flext','passact'),se
 wristdata <- merge(patientDetails,wristlong,by='Patient.no')
 ```
 
-## Filtering Out MSI Strength (Non Longitudnal)
+## Subsetting and Cleaning Elbow (Repeated Measure)
 
 ```{r}
-MSI <- cogdata %>% filter(str_detect(X1,'msi strenght')) %>% select(-c(X2,X3)) %>% data.frame()
-MSI[,1] <- c('wrist_msi_strength','elbow_msi_strength','shoulder_msi_strength')
-rownames(MSI) <- MSI[,1]
-MSI <- MSI %>% t() %>% data.frame()
-rownames(MSI) <- gsub('X','',rownames(MSI))
-MSI <- MSI %>% slice(-1)
-MSI <- sapply(MSI,as.numeric) %>% data.frame()
-```
+##subsetting and cleaning the wrist data
+elbow <- ms %>% filter(X1=='elbow' | X1=='Patient no') 
+#join the first 3 columns together to form unique names for the variables
+elbow <- elbow %>% unite(X1,X1:X3) %>% data.frame()
+#set the row names to be equal the first column
+rownames(elbow) <- as.character(elbow[,1])
+#transpose the dataframe and convert back to dataframe
+elbow <- elbow %>% t() %>% data.frame()
+rownames(elbow) <- 1:39
+elbow <- elbow[-1,]
+elbow$Patient.no <- patientDetails$Patient.no
+elbow <- elbow[,-1]
+elbow <- elbow %>% sapply(X=.,as.numeric) %>% data.frame()
+elbowlong <- elbow %>% gather(key='bodyparts',value='measure',starts_with('elbow'),-Patient.no)
+elbowlong <- elbowlong %>% separate(bodyparts,c('bodypart','flext','passact'),sep='_')
 
-### Joining MSI and Patient Characteristics (MSI Dataset for Analysis)
-
-```{r}
-MSID <- bind_cols(patientDetails,MSI)
-MSIDdata <- MSID %>% gather(key='msistrength',value='measure',-Patient.no,-sex,-group,-affected.limb,-Age,-duration.of.stroke,-Handedness)
-MSIDdata <- MSIDdata %>% mutate(msistrength=gsub('_msi_strength','',msistrength))
 ```
 
 ## Subsetting and Cleaning Wrist Spasticity
@@ -145,10 +169,10 @@ wristspas <- wristspas %>% t() %>% data.frame()
 rownames(wristspas) <- 1:39
 #removing the first row (same as the variable names)
 wristspas <- wristspas[-1,]
-#correcting the patient numbers
-wristspas$Patient.no <- patientDetails$Patient.no
 #removing the first colums (same as patient numbers)
 wristspas <- wristspas[,-1]
+#correcting the patient numbers
+wristspas$Patient.no <- patientDetails$Patient.no
 #converting the variables appropriately to numeric
 wristspas <- wristspas %>% sapply(X=.,as.numeric) %>% data.frame()
 #turning the wide format above to long format
@@ -165,3 +189,4 @@ wristspaslong <- wristspaslong %>% mutate(day=as.numeric(gsub('day.','',day)))
 wristspasdata <- merge(patientDetails,wristspaslong,by='Patient.no')
 ```
 
+## Subsetting and Cleaning Wrist Spasticity
